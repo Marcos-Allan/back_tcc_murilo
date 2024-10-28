@@ -282,203 +282,62 @@ app.put("/update-historico", async (req, res) => {
 //MODELO DO OBJETO DO BANCO DE DADOS
 const Product = mongoose.model('Product', {
     name: {
-        type: String,
-        required: false
-    },
-    category: {
-        type: String,
+        type: String,       // CAMPO DO TIPO STRING
+        required: true      // DEFINE QUE O CAMPO É OBRIGATÓRIO
+      },
+      img: {
+        type: [String],     // ARRAY DE STRINGS PARA ARMAZENAR VÁRIAS URLS DE IMAGENS
+        required: true      // DEFINE QUE O CAMPO É OBRIGATÓRIO
+      },
+      type: {
+        type: [String],     // ARRAY DE STRINGS
         required: true
-    },
-    price: {
-        type: String,
-        required: false
-    }
+      },
+      colors: {
+        type: [[String]],   // ARRAY DE ARRAYS DE STRINGS
+        required: true
+      },
+      prices: {
+        type: [String],     // ARRAY DE STRINGS
+        required: true
+      }
 });
 
-//ROTA DE REGISTRO FEITA PARA REGISTRAR PRODUTO
-app.post("/product/register", async (req, res) => {
-    //PEGA OS DADOS DA REQUISIÇÃO
-    const name = req.body.name
-    const category = req.body.category
-    const price = req.body.price
-
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!name){
-        res.send("Nome não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!category){
-        res.send("Categoria não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!price){
-        res.send("Senha não correspondente.")
-        return
-    }
-
-    //CRIA UM NOVO USUÁRIO COM BASE NO BANCO DE DADOS
-    const product = new Product({
-        name: name,
-        category: category,
-        price: price,
-    })
-
-    //SALVA NO BANCO DE DADOS O USUÁRIO
-    await product.save()
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(product)
-})
-
-//ROTA PARA PEGAR TODOS OS PRODUTO
-app.get("/products", async (req, res) => {
-    //LISTA TODOS OS PRODUTOS DO BANCO DE DADOS
-    const products = await Product.find()
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(products)
-})
-
-//ROTA PARA PEGAR PRODUTO ESPECIFICO
-app.get("/product/:name",  async (req, res) => {
-    //PEGA OS DADOS PELA REQUISIÇÃO
-    const name = req.params.name
-
-    //PROCURA POR UM PRODUTO COM O CAMPO ESPECIFICADO
-    const person = await Person.findOne({ name: name })
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(person)
-})
-
-//MODELO DO OBJETO DO BANCO DE DADOS
-const Order = mongoose.model('Order', {
-    client_name: {
-        type: String,
-        required: false
-    },
-    client_address: {
-        type: String,
-        required: false
-    },
-    payment_mode: {
-        type: String,
-        required: false
-    },
-    data: {
-        type: String,
-        required: true
-    },
-    print: {
-        type: String,
-        required: false
-    }
-});
-
-//ROTA PARA PEGAR TODOS OS PEDIDOS
-app.get("/orders", async (req, res) => {
-    //LISTA TODOS OS PEDIDOS DOS USUÁRIOS DO BANCO DE DADOS
-    const order = await Order.find()
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(order)
-})
-
-//ROTA PARA PEGAR PEDIDO ESPECIFICO
-app.get("/order/:client_name",  async (req, res) => {
-    //PEGA OS DADOS PELA REQUISIÇÃO
-    const client_name = req.params.client_name
-
-    //PROCURA PELOS PEDIDOS DOCLIENTE COM O CAMPO ESPECIFICADO
-    const order = await Order.findOne({ client_name: client_name })
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(order)
-})
-
-//ROTA DE REGISTRO FEITA PARA REGISTRAR PEDIDO
-app.post("/order/register", async (req, res) => {
-    //PEGA OS DADOS DA REQUISIÇÃO
-    const client_name = req.body.client_name
-    const client_address = req.body.client_address
-    const payment_mode = req.body.payment_mode
-    const data = req.body.data
-    const print = req.body.print
-
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!client_name){
-        res.send("Nome não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!client_address){
-        res.send("Endereço não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!payment_mode){
-        res.send("Modo de pagamento não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!data){
-        res.send("Data não correspondente.")
-        return
-    }
-    //VERIFICA SE OS CAMPOS FORAM PASSADOS OU NÃO
-    if (!print){
-        res.send("Estampa não correspondente.")
-        return
-    }
-
-    //CRIA UM NOVO PEDIDO COM BASE NO BANCO DE DADOS
-    const order = new Order({
-        client_name: client_name,
-        client_address: client_address,
-        payment_mode: payment_mode,
-        data: data,
-        print: print,
-    })
-
-    //SALVA NO BANCO DE DADOS O USUÁRIO
-    await order.save()
-
-    //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
-    return res.send(order)
-})
-
-
-app.post('/person/:id/pedido', async (req, res) => {
-    const personId = req.params.id;
-    const { item, quantidade, complemento } = req.body; // Desestruturação dos dados da requisição
-
+app.post('/add-product', async (req, res) => {
     try {
-        // Encontra a pessoa pelo ID
-        const person = await Person.findById(personId);
-        if (!person) {
-            return res.status(404).json({ error: 'Pessoa não encontrada' });
-        }
-
-        // Verifique se o campo complemento foi enviado e atualize se necessário
-        if (complemento) {
-            person.complemento = complemento;
-        } else if (!person.complemento) {
-            return res.status(400).json({ error: 'Campo `complemento` é obrigatório' });
-        }
-
-        // Adiciona o novo pedido ao array historico_pedido
-        person.historico_pedido.push({ item, quantidade });
-
-        // Salva a pessoa atualizada no banco de dados
-        await person.save();
-
-        res.status(200).json({ message: 'Pedido adicionado ao histórico', person });
+      // CRIA UM NOVO DOCUMENTO USANDO OS DADOS DO CORPO DA REQUISIÇÃO
+      const newMaterial = new Product({
+        name: req.body.materials.name,         // DEFINE O NOME DO MATERIAL
+        img: req.body.materials.img,           // DEFINE O ARRAY DE URLS DAS IMAGENS
+        type: req.body.materials.type,         // DEFINE OS TIPOS
+        colors: req.body.materials.colors,     // DEFINE AS CORES
+        prices: req.body.materials.prices      // DEFINE OS PREÇOS
+      });
+  
+      // SALVA O NOVO DOCUMENTO NO BANCO DE DADOS
+      const savedMaterial = await newMaterial.save();
+  
+      // RETORNA UMA RESPOSTA DE SUCESSO
+      res.status(201).json(savedMaterial);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao adicionar pedido', details: error });
+      // EM CASO DE ERRO, RETORNA UMA MENSAGEM DE ERRO
+      res.status(400).json({ message: error.message });
     }
-});
+  });
+
+app.get('/all-products', async (req, res) => {
+    try {
+      // USA O MÉTODO find() PARA BUSCAR TODOS OS DOCUMENTOS
+      const materials = await Product.find();
+  
+      // RETORNA OS DOCUMENTOS ENCONTRADOS EM FORMATO JSON
+      res.status(200).json(materials);
+    } catch (error) {
+      // EM CASO DE ERRO, RETORNA UMA MENSAGEM DE ERRO
+      res.status(500).json({ message: error.message });
+    }
+  });
+
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
     console.log(`rodando no ${port} `)
