@@ -31,6 +31,10 @@ const Person = mongoose.model('Person', {
         required: false,
         default: 'local',
     },
+    cart: {
+        type: [],
+        required: false
+    },
     cep: {
         type: String,
         required: false
@@ -184,44 +188,71 @@ app.post("/register-google", async (req, res) => {
     }
 })
 
-//ROTA PARA ATUALIZAR O HISTÓRICO DE PEDIDOS DO USUÁRIO
-app.put("/add-historico", async (req, res) => {
-    // PEGA OS DADOS DA REQUISIÇÃO
-    const { userId, pedido } = req.body;
+//ROTA PARA FINALIZAR COMPRA E MOVER PEDIDOS PARA O HISTÓRICO
+app.post("/finalizar-compra", async (req, res) => {
+    const { userId } = req.body;
 
-    // VERIFICA SE OS CAMPOS FORAM PASSADOS
     if (!userId) {
-        return res.send("informe o ID do usuário");
-    }
-
-    // VERIFICA SE OS CAMPOS FORAM PASSADOS
-    if (!pedido) {
-        return res.send("informe o pedido a ser adicionado");
+        return res.status(400).send("informe o ID do usuário");
     }
 
     try {
-        // PROCURA O USUÁRIO PELO ID
         const person = await Person.findById(userId);
 
-        // VERIFICA SE O USUÁRIO EXISTE
         if (!person) {
-            return res.send("usuário não encontrado");
+            return res.status(404).send("usuário não encontrado");
         }
 
-        // ADICIONA O NOVO PEDIDO AO ARRAY DE HISTÓRICO DE PEDIDOS
-        person.historico_pedido.push(pedido);
+        if (person.cart.length === 0) {
+            return res.status(400).send("carrinho vazio");
+        }
 
-        // SALVA AS ALTERAÇÕES NO BANCO DE DADOS
+        // Move os itens do carrinho para o histórico de pedidos e limpa o carrinho
+        person.historico_pedido = [...person.historico_pedido, ...person.cart];
+        person.cart = [];
+
         await person.save();
-
-        // RETORNA OS DADOS ATUALIZADOS
-        return res.send({ message: "Pedido adicionado com sucesso", historico_pedido: person.historico_pedido });
+        return res.status(200).send({
+            message: "Compra finalizada e adicionada ao histórico com sucesso",
+            historico_pedido: person.historico_pedido,
+        });
     } catch (error) {
-        // RETORNA MENSAGEM DE ERRO SE HOUVER PROBLEMAS
-        return res.status(500).send("Erro ao adicionar pedido");
+        console.error(error);
+        return res.status(500).send("Erro ao finalizar compra");
     }
 });
 
+// ROTA PARA ADICIONAR ITEM AO CARRINHO
+app.put("/add-carrinho", async (req, res) => {
+    const { userId, produto } = req.body;
+
+    if (!userId) {
+        return res.status(400).send("informe o ID do usuário");
+    }
+
+    if (!produto) {
+        return res.status(400).send("informe o produto a ser adicionado");
+    }
+
+    try {
+        const person = await Person.findById(userId);
+
+        if (!person) {
+            return res.status(404).send("usuário não encontrado");
+        }
+
+        person.cart.push(produto);
+        await person.save();
+
+        return res.status(200).send({
+            message: "Produto adicionado ao carrinho",
+            cart: person.cart,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Erro ao adicionar produto ao carrinho");
+    }
+});
 // ROTA PARA ATUALIZAR UM PEDIDO ESPECÍFICO NO HISTÓRICO DE PEDIDOS DO USUÁRIO
 app.put("/update-historico", async (req, res) => {
     // PEGA OS DADOS DA REQUISIÇÃO
@@ -278,7 +309,6 @@ app.put("/update-historico", async (req, res) => {
     }
 });
 
-
 //MODELO DO OBJETO DO BANCO DE DADOS
 const Product = mongoose.model('Product', {
     name: {
@@ -323,7 +353,7 @@ app.post('/add-product', async (req, res) => {
       // EM CASO DE ERRO, RETORNA UMA MENSAGEM DE ERRO
       res.status(400).json({ message: error.message });
     }
-  });
+});
 
 app.get('/all-products', async (req, res) => {
     try {
@@ -336,7 +366,7 @@ app.get('/all-products', async (req, res) => {
       // EM CASO DE ERRO, RETORNA UMA MENSAGEM DE ERRO
       res.status(500).json({ message: error.message });
     }
-  });
+});
 
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
