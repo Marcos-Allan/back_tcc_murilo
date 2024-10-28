@@ -222,6 +222,63 @@ app.put("/add-historico", async (req, res) => {
     }
 });
 
+// ROTA PARA ATUALIZAR UM PEDIDO ESPECÍFICO NO HISTÓRICO DE PEDIDOS DO USUÁRIO
+app.put("/update-historico", async (req, res) => {
+    // PEGA OS DADOS DA REQUISIÇÃO
+    const { userId, pedidoId, novosDados } = req.body;
+
+    // VERIFICA SE OS CAMPOS FORAM PASSADOS
+    if (!userId) {
+        return res.status(400).send({ error: "Informe o ID do usuário" });
+    }
+
+    if (!pedidoId) {
+        return res.status(400).send({ error: "Informe o ID do pedido a ser atualizado" });
+    }
+
+    if (!novosDados) {
+        return res.status(400).send({ error: "Informe os novos dados do pedido" });
+    }
+
+    try {
+        // PROCURA O USUÁRIO PELO ID
+        const person = await Person.findById(userId);
+
+        // VERIFICA SE O USUÁRIO EXISTE
+        if (!person) {
+            return res.status(404).send({ error: "Usuário não encontrado" });
+        }
+
+        // ENCONTRA O ÍNDICE DO PEDIDO NO HISTÓRICO
+        const pedidoIndex = person.historico_pedido.findIndex(p => p.id === pedidoId);
+
+        // VERIFICA SE O PEDIDO FOI ENCONTRADO
+        if (pedidoIndex === -1) {
+            return res.status(404).send({ error: "Pedido não encontrado no histórico" });
+        }
+
+        // ATUALIZA APENAS O PEDIDO ESPECÍFICO COM OS NOVOS DADOS
+        person.historico_pedido[pedidoIndex] = { 
+            ...person.historico_pedido[pedidoIndex], 
+            ...novosDados 
+        };
+
+        // SALVA AS ALTERAÇÕES NO BANCO DE DADOS
+        await person.save();
+
+        // RETORNA OS DADOS ATUALIZADOS
+        return res.status(200).send({
+            message: "Pedido atualizado com sucesso",
+            historico_pedido: person.historico_pedido
+        });
+    } catch (error) {
+        // RETORNA MENSAGEM DE ERRO SE HOUVER PROBLEMAS
+        console.error(error);
+        return res.status(500).send({ error: "Erro ao atualizar pedido" });
+    }
+});
+
+
 //MODELO DO OBJETO DO BANCO DE DADOS
 const Product = mongoose.model('Product', {
     name: {
