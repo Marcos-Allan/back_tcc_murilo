@@ -306,6 +306,50 @@ app.put("/update-carrinho", async (req, res) => {
     }
 });
 
+//ROTA PARA REMOVER UM ITEM DO CARRINHO
+app.delete("/remove-carrinho", async (req, res) => {
+    const { userId, itemId } = req.body;
+
+    // Verifica se os campos foram passados
+    if (!userId) {
+        return res.status(400).send("Informe o ID do usuário");
+    }
+
+    if (!itemId) {
+        return res.status(400).send("Informe o ID do item a ser removido");
+    }
+
+    try {
+        // Busca o usuário pelo ID
+        const person = await Person.findById(userId);
+
+        // Verifica se o usuário existe
+        if (!person) {
+            return res.status(404).send("Usuário não encontrado");
+        }
+
+        // Filtra o carrinho para remover o item com o ID especificado
+        const updatedCart = person.cart.filter(item => item.id !== itemId);
+
+        // Verifica se o item existia no carrinho
+        if (updatedCart.length === person.cart.length) {
+            return res.status(404).send("Item não encontrado no carrinho");
+        }
+
+        // Atualiza o carrinho do usuário e salva no banco de dados
+        person.cart = updatedCart;
+        await person.save();
+
+        // Retorna o carrinho atualizado
+        return res.status(200).send({
+            message: "Item removido do carrinho com sucesso",
+            cart: person.cart,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Erro ao remover item do carrinho");
+    }
+});
 
 // ROTA PARA ATUALIZAR UM PEDIDO ESPECÍFICO NO HISTÓRICO DE PEDIDOS DO USUÁRIO
 app.put("/update-historico", async (req, res) => {
@@ -421,7 +465,6 @@ app.get('/all-products', async (req, res) => {
       res.status(500).json({ message: error.message });
     }
 });
-
 
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
