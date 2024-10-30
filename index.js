@@ -253,6 +253,60 @@ app.put("/add-carrinho", async (req, res) => {
         return res.status(500).send("Erro ao adicionar produto ao carrinho");
     }
 });
+
+// ROTA PARA ATUALIZAR UM ITEM NO CARRINHO
+app.put("/update-carrinho", async (req, res) => {
+    const { userId, itemId, novosDados } = req.body;
+
+    // Verifica se os campos foram passados
+    if (!userId) {
+        return res.status(400).send("Informe o ID do usuário");
+    }
+
+    if (!itemId) {
+        return res.status(400).send("Informe o ID do item a ser atualizado");
+    }
+
+    if (!novosDados) {
+        return res.status(400).send("Informe os novos dados do item");
+    }
+
+    try {
+        // Busca o usuário pelo ID
+        const person = await Person.findById(userId);
+
+        if (!person) {
+            return res.status(404).send("Usuário não encontrado");
+        }
+
+        // Encontra o índice do item no carrinho
+        const itemIndex = person.cart.findIndex((item) => item.id === itemId);
+
+        if (itemIndex === -1) {
+            return res.status(404).send("Item não encontrado no carrinho");
+        }
+
+        // Atualiza o item no carrinho com os novos dados
+        person.cart[itemIndex] = { 
+            ...person.cart[itemIndex], 
+            ...novosDados 
+        };
+
+        // Salva as alterações no banco de dados
+        await person.save();
+
+        // Retorna os dados atualizados
+        return res.status(200).send({
+            message: "Item atualizado no carrinho com sucesso",
+            cart: person.cart,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).send("Erro ao atualizar item no carrinho");
+    }
+});
+
+
 // ROTA PARA ATUALIZAR UM PEDIDO ESPECÍFICO NO HISTÓRICO DE PEDIDOS DO USUÁRIO
 app.put("/update-historico", async (req, res) => {
     // PEGA OS DADOS DA REQUISIÇÃO
@@ -367,6 +421,7 @@ app.get('/all-products', async (req, res) => {
       res.status(500).json({ message: error.message });
     }
 });
+
 
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
