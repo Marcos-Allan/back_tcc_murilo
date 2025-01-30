@@ -12,6 +12,56 @@ const port = 3000
 const user_name = 'TCC'
 const password = 'f8XFhMUQUUd4AaEV'
 
+// IMPORTA AS BIBLIOTECAS BAIXADAS E NECESSÁRIAS PARA RODAR A APLICAÇÃO
+const nodemailer = require('nodemailer')
+const bcrypt = require('bcrypt') // Substituído argon2 por bcrypt
+const jwt = require('jsonwebtoken')
+
+// INICIA AS VARIÁVEIS DE AMBIENTE PARA SEGURANÇA DA APLICAÇÃO
+require('dotenv').config()
+
+// INICIA A VARIAVEL code COMO VAZIA
+let code
+
+// FUNÇÃO PARA FAZER HASH DA SENHA
+async function hashPassword(password) {
+    try {
+        //DEFINE O NÍVEL DE DIFICULDADE DA SENHA
+        const saltRounds = 10
+
+        //GERA A DIFICULDADE DA SENHA
+        const salt = await bcrypt.genSalt(saltRounds)
+
+        //GERA A SENHA HASHEADA
+        const hash = await bcrypt.hash(password, salt)
+
+        //RETORNA A SENHA HASHEADA
+        return hash
+    } catch (err) {
+        //ESCREVE O ERRO NO CONSOLE
+        console.error("Erro ao hashear a senha:", err)
+
+        //RETORNA O ERRO AO TENTAR HASHEAR A SENHA
+        throw new Error('Erro ao hashear a senha')
+    }
+}
+
+// FUNÇÃO PARA VERIFICAR A SENHA
+async function verifyPassword(password, hash) {
+    try {
+        //FAZ A VERIFICAÇÃO DA SENHA HASEHADA SALVA NO BD E DA SENHA FORNECIDA PELO USUÁRIO
+        const isMatch = await bcrypt.compare(password, hash)
+        //RETORNA O RESULTADO 
+        return isMatch
+    } catch (err) {
+        //ESCREVE O ERRO NO CONSOLE
+        console.error("Erro ao verificar a senha:", err)
+
+        //RETORNA O ERRO AO TENTAR COMPARAR A SENHA
+        throw new Error('Erro ao verificar a senha')
+    }
+}
+
 //MODELO DO OBJETO DO BANCO DE DADOS
 const Person = mongoose.model('Person', {
     name: {
@@ -86,10 +136,13 @@ app.post("/login",  async (req, res) => {
     //VERIFICA SE O USUÁRIO EXISTE NO BD
     if(!person){
         //RETORNA MENSAGEM DE ERRO
-        return res.send('usuário não cadasrtrado')
+        return res.send('usuário não cadastrado')
     }else{
         if(person.login_type == 'local'){
-            if(password == person.password){    
+            //VERIFICA SE A SENHA DO USUÁRIO É IGUAL A SENHA CADASTRADA NO BANCO DE DADOS
+            const checkPassword = await verifyPassword(password, person.password)
+            
+            if(checkPassword == true){    
                 //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
                 return res.send(person)
             }else{
@@ -133,11 +186,14 @@ app.post("/register", async (req, res) => {
         //RETORNA MENSAGEM DE ERRO
         return res.send("usuário já cadastrado com esse email")
     }else{
+        //CRIA O HASH DA SENHA
+        const passwordHash = await hashPassword(password)
+
         //CRIA UM NOVO USUÁRIO COM BASE NO BANCO DE DADOS
         const person = new Person({
             name: name,
             email: email,
-            password: password,
+            password: passwordHash,
         })
     
         //SALVA NO BANCO DE DADOS O USUÁRIO
