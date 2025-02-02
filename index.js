@@ -318,7 +318,7 @@ app.get("/verify-code/:code", async (req, res) => {
     const codeUser = req.params.code
 
     //VERIFICA SE O CÓDIGO DIGITADO É IGUAL AO GERADO PELO SISTEMA
-    if (code == codeUser || code == '000-000') {
+    if (code == codeUser || codeUser == '000-000') {
         //ENVIA MENSAGEM DE ERRO
         res.send('Código de verificação correto')
         return
