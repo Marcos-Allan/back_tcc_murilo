@@ -23,6 +23,43 @@ require('dotenv').config()
 // INICIA A VARIAVEL code COMO VAZIA
 let code
 
+// CONFIGURAÇÃO DO NODEMAILER E DO SERVIDOR DO GMAIL PARA ENVIAR OS EMAILS
+const smtp = nodemailer.createTransport({
+    host: process.env.HOST_GMAIL,
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_SENDER,
+        pass: process.env.CODE_EMAIL,
+    }
+})
+
+// FUNÇÃO RESPONSÁVEL POR CRIAR NÚMEROS ALEATÓRIOS
+function randomNumber() {
+    //RETORNA NÚMERO ALEATÓRIO ENTRE 0 E 10
+    return Math.floor(Math.random() * 10)
+}
+
+// FUNÇÃO RESPONSÁVEL POR ENVIAR EMAIL
+function sendEmail(emailReceiver, code) {
+    smtp.sendMail({
+        from: "Allan Menezes <allanmenezes880@gmail.com>",
+        to: emailReceiver,
+        subject: "recuperação de senha da sua conta do Presente Uníco",
+        html: `<h1>Código de confirmação ${code}</h1>`,
+        text: `Código de confirmação ${code}`
+    })
+    .then(() => {
+        //ESCREVE NO CONSOLE MENSAGEM DE SUCESSO
+        console.log("Email enviado com sucesso!")
+        return
+    }).catch((error) => {
+        //ESCREVE NO CONSOLE MENSAGEM DE ERRO
+        console.log("Algo deu errado no envio do email: ", error)
+        return
+    })
+}
+
 // FUNÇÃO PARA FAZER HASH DA SENHA
 async function hashPassword(password) {
     try {
@@ -242,6 +279,79 @@ app.post("/register-google", async (req, res) => {
         //RETORNA OS DADOS PARA FEEDBACK DO USUÁRIO
         return res.send({person: person, message: 'Seja muito bem vindo'})
     }
+})
+
+//ROTA PARA ENVIAR PEDIDO DE CÓDIGO DE CONFIRMAÇÃO
+app.get("/forgout-password", async (req, res) => {
+    //PEGA OS VALORES POR CORPO DA REQUISIÇÃO
+    const email = req.params.email
+
+    //BUSCA PELO USUÁRIO NO BANCO DE DADOS
+    const person = await Person.findOne({ email: email })
+
+    //VERIFICA SE O USUÁRIO ESTÁ CADASTRADO
+    if (person) {
+        //VERIFICA SE O USUÁRIO TEM SENHA OU NÃO
+        if (person.login_type == 'local') {
+            //GERA O CÓDIGO DE VERIFICAÇÃO
+            code = `${randomNumber()}${randomNumber()}${randomNumber()}-${randomNumber()}${randomNumber()}${randomNumber()}`
+            sendEmail(email, code)
+            
+            //ENVIA A MENSAGEM E O USUÁRIO
+            res.send({ message: 'Código enviado para o email informado', user: person })
+            return
+        } else {
+            //ENVIA MENSAGEM DE ERRO
+            res.send('Conta já cadastrada com Gmail')
+            return
+        }
+    } else {
+        //ENVIA MENSAGEM DE ERRO
+        res.send('Usuário não cadastrado com esse email')
+        return
+    }
+})
+
+//ROTA PARA VERIFICAR CÓDIGO DE CONFIRMAÇÃO
+app.get("/verify-code", async (req, res) => {
+    //PEGA OS VALORES POR CORPO DA REQUISIÇÃO
+    const codeUser = req.params.code
+
+    //VERIFICA SE O CÓDIGO DIGITADO É IGUAL AO GERADO PELO SISTEMA
+    if (code == codeUser) {
+        //ENVIA MENSAGEM DE ERRO
+        res.send('Código de verificação correto')
+        return
+    } else {
+        //ENVIA MENSAGEM DE ERRO
+        res.send('Código de verificação errado')
+        return
+    }
+})
+
+//ROTA DE ATUALIZAÇÃO DE DADOS DO USUÁRIO
+app.put("update-user", async (req, res) => {
+    const id = req.params.id
+    const { password } = req.body
+
+    const passwordHash = password ? await hashPassword(password) : password
+
+    // VERIFICA SE O USUÁRIO ESTÁ CADASTRADO
+    const person = await Person.findById(id)
+
+    // VERIFICA SE O USUÁRIO NÃO ESTÁ CADASTRADO
+    if (!person) {
+        return res.send('Usuário não encontrado')
+    }
+
+    // VERIFICA SE O CAMPO FOI PASSADO
+    if (password) person.password = passwordHash
+
+    // SALVA O USUÁRIO NO BANCO DE DADOS
+    await person.save()
+
+    // RETORNA DADOS DA CONTA
+    res.send(person)
 })
 
 //ROTA PARA FINALIZAR COMPRA E MOVER PEDIDOS PARA O HISTÓRICO
