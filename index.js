@@ -330,7 +330,7 @@ app.get("/verify-code/:code", async (req, res) => {
 })
 
 //ROTA DE ATUALIZAÇÃO DE DADOS DO USUÁRIO
-app.put("update-user/:id", async (req, res) => {
+app.put("/update-user/:id", async (req, res) => {
     const id = req.params.id
     const { password } = req.body
 
