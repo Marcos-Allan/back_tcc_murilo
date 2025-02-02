@@ -14,7 +14,7 @@ const password = 'f8XFhMUQUUd4AaEV'
 
 // IMPORTA AS BIBLIOTECAS BAIXADAS E NECESSÁRIAS PARA RODAR A APLICAÇÃO
 const nodemailer = require('nodemailer')
-const bcrypt = require('bcrypt') // Substituído argon2 por bcrypt
+const bcrypt = require('bcryptjs') // Substituído argon2 por bcrypt
 const jwt = require('jsonwebtoken')
 
 // INICIA AS VARIÁVEIS DE AMBIENTE PARA SEGURANÇA DA APLICAÇÃO
