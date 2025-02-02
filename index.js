@@ -282,7 +282,7 @@ app.post("/register-google", async (req, res) => {
 })
 
 //ROTA PARA ENVIAR PEDIDO DE CÓDIGO DE CONFIRMAÇÃO
-app.get("/forgout-password", async (req, res) => {
+app.get("/forgout-password/:email", async (req, res) => {
     //PEGA OS VALORES POR CORPO DA REQUISIÇÃO
     const email = req.params.email
 
@@ -313,7 +313,7 @@ app.get("/forgout-password", async (req, res) => {
 })
 
 //ROTA PARA VERIFICAR CÓDIGO DE CONFIRMAÇÃO
-app.get("/verify-code", async (req, res) => {
+app.get("/verify-code/:code", async (req, res) => {
     //PEGA OS VALORES POR CORPO DA REQUISIÇÃO
     const codeUser = req.params.code
 
