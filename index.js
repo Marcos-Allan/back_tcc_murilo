@@ -25,9 +25,9 @@ let code
 
 // CONFIGURAÇÃO DO NODEMAILER E DO SERVIDOR DO GMAIL PARA ENVIAR OS EMAILS
 const smtp = nodemailer.createTransport({
+    secure: true,
     host: process.env.HOST_GMAIL,
     port: 465,
-    secure: true,
     auth: {
         user: process.env.EMAIL_SENDER,
         pass: process.env.CODE_EMAIL,
