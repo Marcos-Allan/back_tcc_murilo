@@ -3,6 +3,7 @@ const express = require("express")
 const mongoose = require('mongoose')
 const cors = require('cors')
 
+//CONFIGURAÇÃO DA APLICAÇÃO
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -117,6 +118,11 @@ const Person = mongoose.model('Person', {
         type: String,
         required: false,
         default: 'local',
+    },
+    client_type: {
+        type: String,
+        required: false,
+        default: 'client',
     },
     cart: {
         type: [],
