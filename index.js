@@ -2,6 +2,13 @@
 const express = require("express")
 const mongoose = require('mongoose')
 const cors = require('cors')
+const axios = require('axios')
+const nodemailer = require('nodemailer')
+const bcrypt = require('bcryptjs') // Substituído argon2 por bcrypt
+const jwt = require('jsonwebtoken')
+
+// INICIA AS VARIÁVEIS DE AMBIENTE PARA SEGURANÇA DA APLICAÇÃO
+require('dotenv').config()
 
 //CONFIGURAÇÃO DA APLICAÇÃO
 const app = express()
@@ -10,16 +17,13 @@ app.use(cors())
 const port = 3000
 
 //CONFIGURAÇÕES DO MONGODB
-const user_name = 'TCC'
-const password = 'f8XFhMUQUUd4AaEV'
+const user_name = process.env.USER_NAME
+const password = process.env.PASSWORD
 
-// IMPORTA AS BIBLIOTECAS BAIXADAS E NECESSÁRIAS PARA RODAR A APLICAÇÃO
-const nodemailer = require('nodemailer')
-const bcrypt = require('bcryptjs') // Substituído argon2 por bcrypt
-const jwt = require('jsonwebtoken')
-
-// INICIA AS VARIÁVEIS DE AMBIENTE PARA SEGURANÇA DA APLICAÇÃO
-require('dotenv').config()
+//CONFIGURAÇÕES DO CLOUDNARY
+const CLOUD_NAME = process.env.CLOUD_NAME
+const API_KEY = process.env.API_KEY
+const API_SECRET = process.env.API_SECRET
 
 // INICIA A VARIAVEL code COMO VAZIA
 let code
@@ -143,6 +147,28 @@ const Person = mongoose.model('Person', {
     historico_pedido: {
         type: Array,
         required: false
+    }
+});
+
+//ROTA PARA LISTAR IMAGENS DAS PRE-ESTAMPAS
+app.get("/get-images", async (req, res) => {
+    try {
+        const folder = "images/pre-estampas";
+        
+        const response = await axios.get(
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/resources/search`,
+            {
+                auth: { username: API_KEY, password: API_SECRET },
+                params: { expression: `folder:${folder}`, max_results: 50 },
+            }
+        );
+
+        res.json(response.data.resources.map(img => img.secure_url));
+    } catch (error) {
+        res.status(500).json({
+            error: "Erro ao buscar imagens",
+            details: error.response?.data || error.message
+        });
     }
 });
 
