@@ -664,6 +664,21 @@ app.get('/all-products', async (req, res) => {
     }
 });
 
+app.get('/get-product/:name', async (req, res) => {
+    // PEGA OS DADOS DA REQUISIÇÃO
+    const { name } = req.params;
+
+    const product = await Product.findOne({ name: { $regex: new RegExp(name, 'i') } })
+
+    if(!product) {
+        res.status(404).json({ message: "Produto não encontrado" })
+    }else {
+        res.status(200).json(product)
+    }
+
+
+})
+
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
     console.log(`rodando no ${port} `)
