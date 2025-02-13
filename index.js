@@ -684,9 +684,9 @@ app.get('/get-product/:name', async (req, res) => {
     }
 })
 
-app.delete('/delete-image', async (req, res) => {
+app.delete('/delete-image/:publicId', async (req, res) => {
     try {
-        const { publicId } = req.body
+        const { publicId } = req.params
 
         if(!publicId) {
             return res.status(400).json({ error: "Public ID requirido" })
