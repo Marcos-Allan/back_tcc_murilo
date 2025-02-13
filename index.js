@@ -6,6 +6,7 @@ const axios = require('axios')
 const nodemailer = require('nodemailer')
 const bcrypt = require('bcryptjs') // Substituído argon2 por bcrypt
 const jwt = require('jsonwebtoken')
+const cloudnary = require('cloudinary').v2
 
 // INICIA AS VARIÁVEIS DE AMBIENTE PARA SEGURANÇA DA APLICAÇÃO
 require('dotenv').config()
@@ -24,6 +25,12 @@ const password = process.env.PASSWORD
 const CLOUD_NAME = process.env.CLOUD_NAME
 const API_KEY = process.env.API_KEY
 const API_SECRET = process.env.API_SECRET
+
+cloudnary.config({
+    cloud_name: CLOUD_NAME,
+    api_key: API_KEY,
+    api_secret: API_SECRET,
+})
 
 // INICIA A VARIAVEL code COMO VAZIA
 let code
@@ -675,8 +682,26 @@ app.get('/get-product/:name', async (req, res) => {
     }else {
         res.status(200).json(product)
     }
+})
 
+app.delete('/delete-image', async (req, res) => {
+    try {
+        const { publicId } = req.body
 
+        if(!publicId) {
+            return res.status(400).json({ error: "Public ID requirido" })
+        }
+
+        const result = await cloudnary.uploader.destroy(publicId)
+
+        if(result.result === "not-found") {
+            return res.status(404).json({ error: "Imagem não encontrada" })
+        }
+
+        res.json({ message: "Imagem deletada com sucesso", result })
+    } catch (error) {
+        res.status(500).json({ error: error.message })
+    }
 })
 
 app.listen(port, () => {
