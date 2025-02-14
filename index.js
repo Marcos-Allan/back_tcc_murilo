@@ -684,6 +684,33 @@ app.get('/get-product/:name', async (req, res) => {
     }
 })
 
+//ROTA DE ATUALIZAÇÃO DE DADOS DO PRODUTO
+app.put('/update-product/:id', async (req, res) => {
+    const id = req.params.id
+    const { name, img, type, colors, prices } = req.body
+
+    // VERIFICA SE O USUÁRIO ESTÁ CADASTRADO
+    const product = await Product.findById(id)
+
+    // VERIFICA SE O USUÁRIO NÃO ESTÁ CADASTRADO
+    if (!product) {
+        return res.send('Produto não encontrado')
+    }
+
+    // VERIFICA SE O CAMPO FOI PASSADO
+    if (name) product.name = name
+    if (img) product.img = img
+    if (type) product.type = type
+    if (colors) product.colors = colors
+    if (prices) product.prices = prices
+
+    // SALVA O USUÁRIO NO BANCO DE DADOS
+    await product.save()
+
+    // RETORNA DADOS DA CONTA
+    res.send(product)
+})
+
 app.delete('/delete-image', async (req, res) => {
     try {
         const { publicId } = req.body
