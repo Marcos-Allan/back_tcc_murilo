@@ -675,7 +675,7 @@ app.get('/get-product/:name', async (req, res) => {
     // PEGA OS DADOS DA REQUISIÇÃO
     const { name } = req.params;
 
-    const product = await Product.findOne({ name: { $regex: new RegExp(name, 'i') } })
+    const product = await Product.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
 
     if(!product) {
         res.status(404).json({ message: "Produto não encontrado" })
