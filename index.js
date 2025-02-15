@@ -711,6 +711,22 @@ app.put('/update-product/:id', async (req, res) => {
     res.send(product)
 })
 
+//ROTA DE EXCLUSÃO DO PRODUTO
+app.put('/delete-product/:id', async (req, res) => {
+    const id = req.params.id
+
+    // VERIFICA SE O USUÁRIO ESTÁ CADASTRADO
+    const product = await Product.findByIdAndDelete(id)
+
+    // VERIFICA SE O USUÁRIO NÃO ESTÁ CADASTRADO
+    if (!product) {
+        return res.send('Produto não encontrado')
+    }
+
+    // RETORNA MENSAGEM DE SUCESSO AO EXCLUIR O PRODUTO
+    res.send("Produto Excluído com sucesso")
+})
+
 app.delete('/delete-image', async (req, res) => {
     try {
         const { publicId } = req.body
@@ -734,4 +750,5 @@ app.delete('/delete-image', async (req, res) => {
 app.listen(port, () => {
     mongoose.connect(`mongodb+srv://${user_name}:${password}@bdpresente.fttzn1n.mongodb.net/?retryWrites=true&w=majority&appName=bdpresente`)
     console.log(`rodando no ${port} `)
+
 })
