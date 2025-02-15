@@ -712,7 +712,7 @@ app.put('/update-product/:id', async (req, res) => {
 })
 
 //ROTA DE EXCLUSÃO DO PRODUTO
-app.put('/delete-product/:id', async (req, res) => {
+app.delete('/delete-product/:id', async (req, res) => {
     const id = req.params.id
 
     // VERIFICA SE O USUÁRIO ESTÁ CADASTRADO
